@@ -193,6 +193,11 @@ impl Context {
             log::info!("egraph stats: {:?}", eg.stats);
         } else if opt_level != OptLevel::None && isa.flags().enable_alias_analysis() {
             self.replace_redundant_loads()?;
+            self.preopt(isa)?;
+            self.canonicalize_nans(isa)?;
+            self.legalize(isa)?;
+            self.compute_domtree();
+            self.compute_loop_analysis();
             self.simple_gvn(isa)?;
         }
 
