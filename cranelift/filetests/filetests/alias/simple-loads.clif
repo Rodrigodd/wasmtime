@@ -1,0 +1,36 @@
+
+test alias-analysis
+set opt_level=speed
+target aarch64
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Redundant-store elimination
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+function %f0(i64 vmctx) {
+    gv0 = vmctx
+    gv1 = load.i64 notrap readonly aligned gv0+8
+    heap0 = static gv1, bound 0x1_0000_0000, offset_guard 0x8000_0000, index_type i32
+    fn0 = %g(i64 vmctx)
+
+block0(v0: i64):
+    v1 = load.i8 v0
+    v2 = iconst.i8 1
+    v3 = iadd v1, v2  ; v2 = 1
+    store v3, v0
+    v4 = iconst.i8 2
+    v5 = iadd v1, v4  ; v4 = 2
+    store v5, v0
+    v6 = iconst.i8 3
+    v7 = iadd v1, v6  ; v6 = 3
+    store v7, v0
+    v8 = iconst.i8 4
+    v9 = iadd v1, v8  ; v8 = 4
+    store v9, v0
+    
+    ; not: store v3, v0
+    ; not: store v5, v0
+    ; not: store v7, v0
+    ; check: store v9, v0
+    return
+}

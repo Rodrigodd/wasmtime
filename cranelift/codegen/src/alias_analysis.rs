@@ -292,6 +292,23 @@ impl<'a> AliasAnalysis<'a> {
                     let opcode = pos.func.dfg[inst].opcode();
 
                     if opcode.can_store() {
+                        // if the last store is also storing in the same place, remove it
+                        state.get_last_store(pos.func, inst).map(|last_store| 'a: {
+                            let last_opcode = pos.func.dfg[last_store].opcode();
+                            if !last_opcode.can_store() {
+                                break 'a;
+                            }
+
+                            let Some((last_address, last_offset, last_ty)) =
+                                inst_addr_offset_type(pos.func, last_store)
+                            else {
+                                break 'a;
+                            };
+
+                            if last_address == address && last_offset == offset && last_ty == ty {
+                                pos.layout_mut().remove_inst(last_store);
+                            }
+                        });
                         let store_data = inst_store_data(pos.func, inst).unwrap();
                         let store_data = pos.func.dfg.resolve_aliases(store_data);
                         let mem_loc = MemoryLoc {
